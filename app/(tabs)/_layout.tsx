@@ -1,33 +1,87 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
-
-import { HapticTab } from '@/components/haptic-tab';
-import { IconSymbol } from '@/components/ui/icon-symbol';
+import { MaterialIcons } from '@expo/vector-icons';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
+  const colors = Colors[colorScheme ?? 'dark'];
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
         headerShown: false,
-        tabBarButton: HapticTab,
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.textSecondary,
+        tabBarStyle: {
+          backgroundColor: colors.surfaceCard,
+          borderTopColor: colors.borderLight,
+          borderTopWidth: 1,
+          height: 60 + 24,
+          paddingBottom: 24,
+          paddingTop: 8,
+        },
+        tabBarLabelStyle: {
+          fontSize: 10,
+          fontWeight: '500',
+          marginTop: 4,
+        },
       }}>
       <Tabs.Screen
         name="index"
         options={{
           title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          tabBarIcon: ({ color, focused }) => (
+            <MaterialIcons 
+              name="dashboard" 
+              size={24} 
+              color={color} 
+              style={{ opacity: focused ? 1 : 0.6 }}
+            />
+          ),
         }}
       />
       <Tabs.Screen
-        name="explore"
+        name="clients"
         options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          title: 'Clients',
+          tabBarIcon: ({ color, focused }) => (
+            <MaterialIcons 
+              name="devices" 
+              size={24} 
+              color={color}
+              style={{ opacity: focused ? 1 : 0.6 }}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="settings"
+        options={{
+          title: 'Wi-Fi',
+          tabBarIcon: ({ color, focused }) => (
+            <MaterialIcons 
+              name="wifi" 
+              size={24} 
+              color={color}
+              style={{ opacity: focused ? 1 : 0.6 }}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="stats"
+        options={{
+          title: 'Stats',
+          tabBarIcon: ({ color, focused }) => (
+            <MaterialIcons 
+              name="analytics" 
+              size={24} 
+              color={color}
+              style={{ opacity: focused ? 1 : 0.6 }}
+            />
+          ),
         }}
       />
     </Tabs>
