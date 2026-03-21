@@ -74,6 +74,7 @@ export interface ButtonProps {
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
   size?: 'small' | 'medium' | 'large';
   disabled?: boolean;
+  isLoading?: boolean;
   icon?: React.ReactNode;
   iconPosition?: 'left' | 'right';
 }

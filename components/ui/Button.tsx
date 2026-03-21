@@ -10,11 +10,14 @@ export const Button: React.FC<ButtonProps> = ({
   variant = 'primary',
   size = 'medium',
   disabled = false,
+  isLoading = false,
   icon,
   iconPosition = 'left',
 }) => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'dark'];
+
+  const isDisabled = disabled || isLoading;
 
   const getBackgroundColor = () => {
     if (disabled) return colors.border;
@@ -65,16 +68,22 @@ export const Button: React.FC<ButtonProps> = ({
 
   const getContent = () => (
     <View style={[styles.content, iconPosition === 'right' && styles.contentReverse]}>
-      {icon && <View style={styles.icon}>{icon}</View>}
-      <Text
-        style={[
-          styles.text,
-          { color: getTextColor() },
-          getSizeStyles(),
-        ]}
-      >
-        {title}
-      </Text>
+      {isLoading ? (
+        <ActivityIndicator color={getTextColor()} size="small" />
+      ) : (
+        <>
+          {icon && <View style={styles.icon}>{icon}</View>}
+          <Text
+            style={[
+              styles.text,
+              { color: getTextColor() },
+              getSizeStyles(),
+            ]}
+          >
+            {title}
+          </Text>
+        </>
+      )}
     </View>
   );
 
