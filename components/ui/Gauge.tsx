@@ -21,14 +21,14 @@ export const GaugeCard: React.FC<GaugeCardProps> = ({
   const strokeDasharray = `${(percentage / 100) * circumference}, ${circumference}`;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: `${colors.surface}cc`, borderColor: `${colors.border}30` }]}>
       <View style={styles.gaugeWrapper}>
         <Svg width={48} height={48} style={styles.svg}>
           <Circle
             cx="24"
             cy="24"
             r="20"
-            stroke={colors.border}
+            stroke="#334155"
             strokeWidth="3"
             fill="none"
           />
@@ -42,6 +42,9 @@ export const GaugeCard: React.FC<GaugeCardProps> = ({
             strokeDasharray={strokeDasharray}
             strokeLinecap="round"
             transform="rotate(-90, 24, 24)"
+            shadowColor={color}
+            shadowBlur={6}
+            shadowOffset={{ width: 0, height: 0 }}
           />
         </Svg>
         <View style={styles.iconContainer}>{icon}</View>
@@ -59,8 +62,13 @@ export const GaugeCard: React.FC<GaugeCardProps> = ({
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 12,
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 1,
   },
   gaugeWrapper: {
     position: 'relative',

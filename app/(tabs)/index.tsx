@@ -2,12 +2,12 @@ import React from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Svg, Defs, LinearGradient as SvgLinearGradient, Stop, Path } from 'react-native-svg';
+import { Svg, Defs, LinearGradient as SvgLinearGradient, Stop, Path, Line } from 'react-native-svg';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
 import { Card, GaugeCard, Badge } from '@/components/ui';
-import { MOCK_SYSTEM_HEALTH } from '@/constants/data';
+import { MOCK_SYSTEM_HEALTH, MOCK_DEVICES, SIGNAL_STRENGTH_COLORS } from '@/constants/data';
 
 export default function DashboardScreen() {
   const colorScheme = useColorScheme();
@@ -71,11 +71,18 @@ export default function DashboardScreen() {
 
             {/* Chart */}
             <View style={styles.chartContainer}>
+              {/* Grid Lines */}
+              <View style={styles.gridLines}>
+                <View style={[styles.gridLine, { borderBottomColor: `${colors.textSecondary}20` }]} />
+                <View style={[styles.gridLine, { borderBottomColor: `${colors.textSecondary}20` }]} />
+                <View style={[styles.gridLine, { borderBottomColor: `${colors.textSecondary}20` }]} />
+              </View>
+
               <Svg style={styles.chart} height={128} width="100%">
                 <Defs>
                   <SvgLinearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-                    <Stop offset="0%" stopColor={colors.info} stopOpacity="0.4" />
-                    <Stop offset="100%" stopColor={colors.info} stopOpacity="0" />
+                    <Stop offset="0%" stopColor="#3b82f6" stopOpacity="0.4" />
+                    <Stop offset="100%" stopColor="#3b82f6" stopOpacity="0" />
                   </SvgLinearGradient>
                 </Defs>
                 <Path
@@ -85,9 +92,12 @@ export default function DashboardScreen() {
                 <Path
                   d="M0,80 C50,80 75,50 125,65 C175,80 200,30 250,45 C300,60 325,15 375,25 C425,35 450,65 500,50"
                   fill="none"
-                  stroke={colors.info}
-                  strokeWidth="3"
+                  stroke="#3b82f6"
+                  strokeWidth="2"
                   strokeLinecap="round"
+                  shadowColor="#3b82f6"
+                  shadowBlur={10}
+                  shadowOffset={{ width: 0, height: 0 }}
                 />
               </Svg>
             </View>
@@ -147,6 +157,75 @@ export default function DashboardScreen() {
               color={colors.warning}
             />
           </View>
+        </View>
+
+        {/* Connected Devices Section */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Connected Devices</Text>
+            <Badge text="12 Active" variant="info" size="small" />
+          </View>
+
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.deviceList}
+            contentContainerStyle={styles.deviceListContent}
+          >
+            {/* Add Device Button */}
+            <TouchableOpacity style={[styles.addDeviceButton, { borderColor: `${colors.border}50` }]}>
+              <MaterialIcons name="add" size={28} color={colors.textSecondary} />
+              <Text style={[styles.addDeviceText, { color: colors.textSecondary }]}>Add New</Text>
+            </TouchableOpacity>
+
+            {/* Device 1 */}
+            <Card style={[styles.deviceCard, { backgroundColor: `${colors.surface}cc` }]}>
+              <View style={styles.deviceCardHeader}>
+                <View style={[styles.deviceIcon, { backgroundColor: colors.surface }]}>
+                  <MaterialIcons name="smartphone" size={18} color={colors.textSecondary} />
+                </View>
+                <View style={[styles.deviceStatusDot, { backgroundColor: SIGNAL_STRENGTH_COLORS.Excellent }]} />
+              </View>
+              <Text style={[styles.deviceName, { color: colors.textPrimary }]}>iPhone 14 Pro</Text>
+              <Text style={[styles.deviceInfo, { color: colors.textSecondary }]}>5G • 240 Mbps</Text>
+            </Card>
+
+            {/* Device 2 */}
+            <Card style={[styles.deviceCard, { backgroundColor: `${colors.surface}cc` }]}>
+              <View style={styles.deviceCardHeader}>
+                <View style={[styles.deviceIcon, { backgroundColor: colors.surface }]}>
+                  <MaterialIcons name="laptop-mac" size={18} color={colors.textSecondary} />
+                </View>
+                <View style={[styles.deviceStatusDot, { backgroundColor: SIGNAL_STRENGTH_COLORS.Excellent }]} />
+              </View>
+              <Text style={[styles.deviceName, { color: colors.textPrimary }]}>MacBook Air</Text>
+              <Text style={[styles.deviceInfo, { color: colors.textSecondary }]}>WiFi 6 • 580 Mbps</Text>
+            </Card>
+
+            {/* Device 3 */}
+            <Card style={[styles.deviceCard, { backgroundColor: `${colors.surface}cc` }]}>
+              <View style={styles.deviceCardHeader}>
+                <View style={[styles.deviceIcon, { backgroundColor: colors.surface }]}>
+                  <MaterialIcons name="tv" size={18} color={colors.textSecondary} />
+                </View>
+                <View style={[styles.deviceStatusDot, { backgroundColor: colors.warning }]} />
+              </View>
+              <Text style={[styles.deviceName, { color: colors.textPrimary }]}>Living Room TV</Text>
+              <Text style={[styles.deviceInfo, { color: colors.textSecondary }]}>Idle • 2 Mbps</Text>
+            </Card>
+
+            {/* Device 4 */}
+            <Card style={[styles.deviceCard, { backgroundColor: `${colors.surface}cc` }]}>
+              <View style={styles.deviceCardHeader}>
+                <View style={[styles.deviceIcon, { backgroundColor: colors.surface }]}>
+                  <MaterialIcons name="sports-esports" size={18} color={colors.textSecondary} />
+                </View>
+                <View style={[styles.deviceStatusDot, { backgroundColor: colors.border }]} />
+              </View>
+              <Text style={[styles.deviceName, { color: colors.textPrimary }]}>PS5 Console</Text>
+              <Text style={[styles.deviceInfo, { color: colors.textSecondary }]}>Offline</Text>
+            </Card>
+          </ScrollView>
         </View>
 
         {/* Speed Test Banner */}
@@ -292,6 +371,20 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   chart: { height: '100%', width: '100%' },
+  gridLines: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'space-between',
+    opacity: 0.2,
+  },
+  gridLine: {
+    flex: 1,
+    borderBottomWidth: 1,
+    borderBottomStyle: 'dashed',
+  },
   statsRow: {
     flexDirection: 'row',
     gap: 16,
@@ -346,5 +439,60 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'rgba(255,255,255,0.05)',
+  },
+  deviceList: {
+    marginHorizontal: -20,
+    paddingHorizontal: 20,
+  },
+  deviceListContent: {
+    gap: 16,
+  },
+  addDeviceButton: {
+    width: 80,
+    height: 96,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    flexShrink: 0,
+  },
+  addDeviceText: {
+    fontSize: 10,
+    fontWeight: '500',
+    textTransform: 'uppercase',
+  },
+  deviceCard: {
+    width: 128,
+    padding: 12,
+    borderRadius: 16,
+    flexShrink: 0,
+  },
+  deviceCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 12,
+  },
+  deviceIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  deviceStatusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  deviceName: {
+    fontSize: 12,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  deviceInfo: {
+    fontSize: 10,
   },
 });
