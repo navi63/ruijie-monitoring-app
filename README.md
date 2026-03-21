@@ -1,50 +1,161 @@
-# Welcome to your Expo app 👋
+# Stitch Mobile App
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A modern, minimalist mobile application for controlling and monitoring Stitch wireless routers. Built with React Native, Expo, and TypeScript.
 
-## Get started
+## Overview
 
-1. Install dependencies
+The Stitch Mobile App provides an intuitive, elegant interface for network management with real-time monitoring, client management, Wi-Fi configuration, and usage statistics. The design follows a premium, WiFiman-inspired aesthetic with OLED dark mode as the primary interface.
 
-   ```bash
-   npm install
-   ```
+## Features
 
-2. Start the app
+- **Dashboard Monitoring**: Real-time network traffic gauge, system health metrics (CPU, RAM, temperature)
+- **Connected Clients Management**: View all devices, manage bandwidth limits, block/unblock devices
+- **Wireless Configuration**: Manage SSID settings, guest networks, channel optimization
+- **Usage Statistics**: Detailed bandwidth charts, top consumers tracking, monthly summaries
+- **Modern UI**: Glassmorphism effects, electric blue glow accents, smooth animations
 
-   ```bash
-   npx expo start
-   ```
+## Tech Stack
 
-In the output, you'll find options to open the app in a
+- **Framework**: Expo (React Native)
+- **Language**: TypeScript
+- **Navigation**: Expo Router (file-based routing)
+- **Styling**: React Native StyleSheet
+- **Icons**: @expo/vector-icons (Material Icons)
+- **Graphics**: react-native-svg, expo-linear-gradient
+- **State Management**: React Hooks + Custom Hooks
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## Getting Started
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+### Prerequisites
 
-## Get a fresh project
+- Node.js 18+ and npm
+- Expo CLI: `npm install -g expo-cli`
+- Expo Go app (for development) or Android Studio / Xcode (for simulators)
 
-When you're ready, run:
+### Installation
 
 ```bash
-npm run reset-project
+# Clone the repository
+git clone <repository-url>
+cd test-expo
+
+# Install dependencies
+npm install
+
+# Start the development server
+npm start
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+### Running the App
 
-## Learn more
+**On Android:**
+```bash
+npm run android
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+**On iOS:**
+```bash
+npm run ios
+```
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+**On Web:**
+```bash
+npm run web
+```
 
-## Join the community
+**With Expo Go:**
+1. Run `npm start`
+2. Scan the QR code with Expo Go app on your phone
 
-Join our community of developers creating universal apps.
+## Project Structure
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+```
+├── app/                    # Expo Router file-based routing
+│   ├── (tabs)/            # Bottom tab navigation
+│   │   ├── index.tsx       # Dashboard
+│   │   ├── clients.tsx     # Connected devices
+│   │   ├── settings.tsx    # Wi-Fi settings
+│   │   └── stats.tsx       # Usage statistics
+│   └── _layout.tsx         # Root layout
+├── components/
+│   └── ui/                # Reusable UI components
+│       ├── Card.tsx
+│       ├── Button.tsx
+│       ├── Toggle.tsx
+│       ├── Badge.tsx
+│       └── Gauge.tsx
+├── constants/
+│   ├── theme.ts           # Color & theme constants
+│   └── data.ts           # Mock data
+├── hooks/
+│   ├── useDevices.ts      # Device management
+│   ├── useChart.tsx       # Chart logic
+│   └── use-color-scheme.ts # Theme management
+├── types/
+│   └── index.ts          # TypeScript interfaces
+├── assets/               # Static assets
+└── scripts/              # Build scripts
+```
+
+## Design System
+
+### Colors
+
+The app uses a sophisticated dark theme with electric blue accents:
+
+- **Primary**: Electric blue (#135bec) - main brand color
+- **Background**: Deep dark (#0d1117) - OLED-optimized
+- **Surface**: Semi-transparent overlays for glassmorphism
+- **Success**: Green for positive status
+- **Warning**: Yellow/Orange for alerts
+- **Error**: Red for errors
+- **Info**: Cyan/blue for informational states
+
+### Typography
+
+- **Headings**: Bold, 700 weight
+- **Body**: Regular, 400-500 weight
+- **Captions**: Light, 400 weight, uppercase
+- **Consistent sizing scale** (10px to 36px)
+
+### Components
+
+All UI components follow these principles:
+- **Reusable**: Can be used across different screens
+- **Type-safe**: Full TypeScript prop definitions
+- **Theme-aware**: Automatically adapt to light/dark mode
+- **Accessible**: Proper touch targets and labels
+
+## Available Scripts
+
+| Command | Description |
+|---------|-------------|
+| `npm start` | Start the Expo development server |
+| `npm run android` | Run on Android emulator/device |
+| `npm run ios` | Run on iOS simulator/device |
+| `npm run web` | Run in web browser |
+| `npm run lint` | Run ESLint to check code quality |
+| `npm run reset-project` | Reset to blank template |
+
+## Documentation
+
+- [Architecture Guide](ARCHITECTURE.md) - Detailed architecture and patterns
+- [Product Requirements](PRD.md) - Features and design specifications
+- [Development Guide](DEVELOPMENT.md) - Developer workflows and guidelines
+- [Component Documentation](COMPONENTS.md) - UI component reference
+
+## Contributing
+
+1. Follow the existing code style and conventions
+2. Add TypeScript types for all new code
+3. Write clear, descriptive component names
+4. Use custom hooks for reusable logic
+5. Test on both iOS and Android when possible
+
+## License
+
+Copyright © 2024 Stitch Wireless
+
+## Support
+
+For issues, questions, or feature requests, please open an issue in the repository.
