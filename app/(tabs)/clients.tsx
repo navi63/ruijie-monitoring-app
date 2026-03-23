@@ -20,6 +20,10 @@ export default function ClientsScreen() {
     setSearchQuery,
     filter,
     setFilter,
+    sortBy,
+    setSortBy,
+    sortOrder,
+    setSortOrder,
     toggleDeviceExpanded,
     toggleDeviceAccess,
     updateBandwidthLimit,
@@ -113,6 +117,38 @@ export default function ClientsScreen() {
             </TouchableOpacity>
           ))}
         </ScrollView>
+
+        {/* Sort Controls */}
+        <View style={styles.sortContainer}>
+          <Text style={[styles.sortLabel, { color: colors.textSecondary }]}>Sort by:</Text>
+          {(['name', 'signal', 'speed'] as const).map((opt) => (
+            <TouchableOpacity
+              key={opt}
+              style={[
+                styles.sortButton,
+                sortBy === opt && { backgroundColor: `${colors.primary}20`, borderColor: colors.primary },
+              ]}
+              onPress={() => {
+                if (sortBy === opt) {
+                  setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                } else {
+                  setSortBy(opt);
+                  setSortOrder(opt === 'name' ? 'asc' : 'desc'); // default names asc, signal/speed desc
+                }
+              }}
+            >
+              <Text
+                style={[
+                  styles.sortButtonText,
+                  { color: sortBy === opt ? colors.primary : colors.textSecondary, textTransform: 'capitalize' },
+                ]}
+              >
+                {opt}
+                {sortBy === opt && (sortOrder === 'asc' ? ' ↑' : ' ↓')}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
 
         {/* Device List */}
         <View style={styles.devicesContainer}>
@@ -278,9 +314,27 @@ const styles = StyleSheet.create({
     marginRight: 8,
     borderWidth: 1,
   },
-  filterTabActive: {},
-  filterTabText: { fontSize: 14, fontWeight: '500' },
+  filterTabActive: { borderColor: 'transparent' },
+  filterTabText: { fontSize: 13, fontWeight: '500' },
   filterTabTextActive: { fontWeight: '600' },
+
+  sortContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    marginBottom: 16,
+    gap: 8,
+  },
+  sortLabel: { fontSize: 12, fontWeight: '500' },
+  sortButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'transparent',
+    backgroundColor: 'transparent',
+  },
+  sortButtonText: { fontSize: 12, fontWeight: '600' },
   devicesContainer: { paddingHorizontal: 16, gap: 12 },
   sectionLabel: {
     fontSize: 12,

@@ -8,6 +8,8 @@ export const useDevices = () => {
   const { getClientsAndMacFilters } = useRouterApi();
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState<'all' | 'active' | 'blocked'>('all');
+  const [sortBy, setSortBy] = useState<'name' | 'signal' | 'speed'>('name');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
   const fetchDevices = useCallback(async () => {
     setIsLoading(true);
@@ -37,7 +39,7 @@ export const useDevices = () => {
         else if (speedKbps > 0) speedStr = `${speedKbps.toFixed(1)} KB/s`;
 
         const rssi = parseInt(c.rssi || '-100');
-        let signal = 'Fair';
+        let signal: 'Excellent' | 'Good' | 'Fair' | 'Poor' | '-' = 'Fair';
         if (rssi > -60) signal = 'Excellent';
         else if (rssi > -80) signal = 'Good';
 
@@ -133,20 +135,44 @@ export const useDevices = () => {
   }, []);
 
   const filteredDevices = useMemo(() => {
-    return devices.filter((device) => {
-      const matchesSearch =
-        device.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        device.ip.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        device.mac.toLowerCase().includes(searchQuery.toLowerCase());
+    const signalRank: Record<string, number> = { 'Excellent': 4, 'Good': 3, 'Fair': 2, 'Poor': 1, '-': 0 };
 
-      const matchesFilter =
-        filter === 'all' ||
-        (filter === 'active' && device.active && !device.blocked) ||
-        (filter === 'blocked' && device.blocked);
+    const parseSpeed = (speed: string): number => {
+      const num = parseFloat(speed) || 0;
+      if (speed.includes('MB/s')) return num * 1024;
+      return num; // KB/s or 0
+    };
 
-      return matchesSearch && matchesFilter;
-    });
-  }, [devices, searchQuery, filter]);
+    return devices
+      .filter((device) => {
+        const matchesSearch =
+          device.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          device.ip.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          device.mac.toLowerCase().includes(searchQuery.toLowerCase());
+
+        const matchesFilter =
+          filter === 'all' ||
+          (filter === 'active' && device.active && !device.blocked) ||
+          (filter === 'blocked' && device.blocked);
+
+        return matchesSearch && matchesFilter;
+      })
+      .sort((a, b) => {
+        let cmp = 0;
+        switch (sortBy) {
+          case 'name':
+            cmp = a.name.localeCompare(b.name);
+            break;
+          case 'signal':
+            cmp = (signalRank[a.signal] ?? 0) - (signalRank[b.signal] ?? 0);
+            break;
+          case 'speed':
+            cmp = parseSpeed(a.speed) - parseSpeed(b.speed);
+            break;
+        }
+        return sortOrder === 'asc' ? cmp : -cmp;
+      });
+  }, [devices, searchQuery, filter, sortBy, sortOrder]);
 
   const stats = useMemo(() => {
     const activeDevices = devices.filter((d) => d.active && !d.blocked);
@@ -169,6 +195,10 @@ export const useDevices = () => {
     setSearchQuery,
     filter,
     setFilter,
+    sortBy,
+    setSortBy,
+    sortOrder,
+    setSortOrder,
     toggleDeviceExpanded,
     toggleDeviceAccess,
     updateBandwidthLimit,
