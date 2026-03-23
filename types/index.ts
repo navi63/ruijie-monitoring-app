@@ -9,6 +9,7 @@ export interface Device {
   ip: string;
   mac: string;
   band: string;
+  ssid?: string;
   signal: 'Excellent' | 'Good' | 'Fair' | 'Poor' | '-';
   speed: string;
   active: boolean;
