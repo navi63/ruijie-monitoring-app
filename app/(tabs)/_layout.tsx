@@ -47,9 +47,23 @@ export default function TabLayout() {
         options={{
           title: 'Clients',
           tabBarIcon: ({ color, focused }) => (
-            <MaterialIcons 
-              name="devices" 
-              size={24} 
+            <MaterialIcons
+              name="devices"
+              size={24}
+              color={color}
+              style={{ opacity: focused ? 1 : 0.6 }}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="router"
+        options={{
+          title: 'Router',
+          tabBarIcon: ({ color, focused }) => (
+            <MaterialIcons
+              name="router"
+              size={24}
               color={color}
               style={{ opacity: focused ? 1 : 0.6 }}
             />
