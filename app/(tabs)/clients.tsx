@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, ScrollView, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -112,12 +113,12 @@ export default function ClientsScreen() {
 
         {/* Device List */}
         <View style={styles.devicesContainer}>
-          {/* High Bandwidth */}
-          {filteredDevices.filter((d) => !d.blocked && d.speed !== '0 KB/s').length > 0 && (
-            <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>HIGH BANDWIDTH USAGE</Text>
+          {/* Active Devices */}
+          {filteredDevices.filter((d) => !d.blocked).length > 0 && (
+            <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>CONNECTED DEVICES</Text>
           )}
 
-          {filteredDevices.filter((d) => !d.blocked && d.speed !== '0 KB/s').map((device) => (
+          {filteredDevices.filter((d) => !d.blocked).map((device) => (
             <Card
               key={device.id}
               style={[
@@ -136,7 +137,7 @@ export default function ClientsScreen() {
                     <Text style={[styles.deviceName, { color: colors.textPrimary }]}>{device.name}</Text>
                     <View style={styles.deviceInfoRow}>
                       <MaterialIcons name="wifi" size={14} color={getSignalColor(device.signal)} />
-                      <Text style={[styles.deviceInfo, { color: colors.textSecondary }]}>{device.band} • {device.signal}</Text>
+                      <Text style={[styles.deviceInfo, { color: colors.textSecondary }]}>{device.ssid ? `${device.ssid} • ` : ''}{device.band} • {device.signal}</Text>
                     </View>
                   </View>
                 </View>
@@ -151,11 +152,17 @@ export default function ClientsScreen() {
                   <View style={styles.deviceDetails}>
                     <View style={styles.detailRow}>
                       <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>IP Address</Text>
-                      <Text style={[styles.detailValue, { color: colors.textPrimary, fontFamily: 'monospace' }]}>{device.ip}</Text>
+                      <TouchableOpacity style={styles.copyRow} onPress={() => { Clipboard.setStringAsync(device.ip); }}>
+                        <Text style={[styles.detailValue, { color: colors.textPrimary, fontFamily: 'monospace' }]}>{device.ip}</Text>
+                        <MaterialIcons name="content-copy" size={12} color={colors.textSecondary} style={{ marginLeft: 6 }} />
+                      </TouchableOpacity>
                     </View>
                     <View style={styles.detailRow}>
                       <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>MAC Address</Text>
-                      <Text style={[styles.detailValue, { color: colors.textPrimary, fontFamily: 'monospace' }]}>{device.mac}</Text>
+                      <TouchableOpacity style={styles.copyRow} onPress={() => { Clipboard.setStringAsync(device.mac); }}>
+                        <Text style={[styles.detailValue, { color: colors.textPrimary, fontFamily: 'monospace' }]}>{device.mac}</Text>
+                        <MaterialIcons name="content-copy" size={12} color={colors.textSecondary} style={{ marginLeft: 6 }} />
+                      </TouchableOpacity>
                     </View>
                   </View>
                   <View style={styles.bandwidthSection}>
@@ -169,38 +176,6 @@ export default function ClientsScreen() {
                   </View>
                 </View>
               )}
-            </Card>
-          ))}
-
-          {/* Idle Devices */}
-          {filteredDevices.filter((d) => !d.active && !d.blocked).length > 0 && (
-            <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>IDLE DEVICES</Text>
-          )}
-
-          {filteredDevices.filter((d) => !d.active && !d.blocked).map((device) => (
-            <Card
-              key={device.id}
-              style={[styles.deviceCard, { opacity: 0.7 }]}
-              onPress={() => toggleDeviceExpanded(device.id)}
-            >
-              <View style={styles.deviceHeader}>
-                <View style={styles.deviceLeft}>
-                  <View style={[styles.deviceIcon, { backgroundColor: `${colors.background}40` }]}>
-                    <MaterialIcons name={device.icon as any} size={22} color={colors.textSecondary} />
-                  </View>
-                  <View>
-                    <Text style={[styles.deviceName, { color: colors.textPrimary }]}>{device.name}</Text>
-                    <View style={styles.deviceInfoRow}>
-                      <MaterialIcons name="wifi-off" size={14} color={colors.textSecondary} />
-                      <Text style={[styles.deviceInfo, { color: colors.textSecondary }]}>Idle</Text>
-                    </View>
-                  </View>
-                </View>
-                <View style={styles.deviceRight}>
-                  <Text style={[styles.deviceSpeed, { color: colors.textSecondary }]}>{device.speed}</Text>
-                  <Toggle value={!device.blocked} onValueChange={() => toggleDeviceAccess(device.id)} size="small" />
-                </View>
-              </View>
             </Card>
           ))}
 
@@ -374,6 +349,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   detailValue: { fontSize: 12 },
+  copyRow: { flexDirection: 'row', alignItems: 'center' },
   bandwidthSection: {},
   bandwidthHeader: {
     flexDirection: 'row',
