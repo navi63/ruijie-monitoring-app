@@ -7,6 +7,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
 import { Card, Toggle, Badge } from '@/components/ui';
 import { useDevices } from '@/hooks';
+import { useRouterOverview } from '@/hooks/useRouterOverview';
 import { DEVICE_FILTER_OPTIONS, SIGNAL_STRENGTH_COLORS } from '@/constants/data';
 
 export default function ClientsScreen() {
@@ -24,6 +25,8 @@ export default function ClientsScreen() {
     updateBandwidthLimit,
     stats,
   } = useDevices();
+
+  const { downRate, upRate } = useRouterOverview();
 
   const getSignalColor = (signal: string) => {
     const key = signal as keyof typeof SIGNAL_STRENGTH_COLORS;
@@ -66,7 +69,7 @@ export default function ClientsScreen() {
               <Text style={[styles.statLabel, { color: colors.textSecondary }]}>DOWNLOAD</Text>
             </View>
             <Text style={[styles.statValue, { color: colors.textPrimary }]}>
-              452.1 <Text style={[styles.statUnit, { color: colors.textSecondary }]}>Mbps</Text>
+              {downRate.value} <Text style={[styles.statUnit, { color: colors.textSecondary }]}>{downRate.unit}</Text>
             </Text>
           </Card>
           <Card style={styles.statCard}>
@@ -77,7 +80,7 @@ export default function ClientsScreen() {
               <Text style={[styles.statLabel, { color: colors.textSecondary }]}>UPLOAD</Text>
             </View>
             <Text style={[styles.statValue, { color: colors.textPrimary }]}>
-              84.5 <Text style={[styles.statUnit, { color: colors.textSecondary }]}>Mbps</Text>
+              {upRate.value} <Text style={[styles.statUnit, { color: colors.textSecondary }]}>{upRate.unit}</Text>
             </Text>
           </Card>
         </View>
