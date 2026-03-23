@@ -15,8 +15,11 @@ export default function DashboardScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'dark'];
 
-  const { downRate, upRate, history } = useRouterOverview();
+  const { downRate, upRate, history, cpuUtil } = useRouterOverview();
   const { avgPing, packetLoss } = useRouterPing();
+
+  // Parse numeric value from cpuUtil (e.g. '12%' -> 12)
+  const cpuLoadValue = parseInt(cpuUtil) || 0;
 
   // Create an SVG path from the bandwidth history array
   // We'll map the history to a 500x128 viewBox coordinate system
@@ -181,9 +184,9 @@ export default function DashboardScreen() {
           <View style={styles.healthGrid}>
             <GaugeCard
               label="CPU Load"
-              value={MOCK_SYSTEM_HEALTH.cpu}
+              value={cpuLoadValue}
               unit="%"
-              percentage={MOCK_SYSTEM_HEALTH.cpu}
+              percentage={cpuLoadValue}
               icon={<MaterialIcons name="memory" size={20} color={colors.primary} />}
               color={colors.primary}
             />

@@ -75,6 +75,7 @@ export function useRouterApi() {
    * Maps to: devSta.get (overview)
    */
   const getOverview = useCallback(async (): Promise<RouterOverviewStats | null> => {
+    if (!authState.cookie) return null;
     try {
       const url = getUrl('/cgi-bin/luci/api/cmd');
       const headers = getHeaders();
@@ -93,7 +94,6 @@ export function useRouterApi() {
 
       const response = await fetch(url, {
         method: 'POST',
-        headers,
         body
       });
       const json = await response.json();
@@ -113,6 +113,7 @@ export function useRouterApi() {
    * Note: Required manual JSON.parse per documentation
    */
   const pingRouter = useCallback(async (): Promise<RouterPingMetrics | null> => {
+    if (!authState.cookie) return null;
     try {
       const url = getUrl('/cgi-bin/luci/api/system');
       const headers = getHeaders();
@@ -146,6 +147,7 @@ export function useRouterApi() {
    * Maps to: cmdArr (user_list, wirelessMacFilter)
    */
   const getClientsAndMacFilters = useCallback(async (): Promise<{ clients: RouterClientNode[], filter: RouterMacFilterConfig } | null> => {
+    if (!authState.cookie) return null;
     try {
       const url = getUrl('/cgi-bin/luci/api/cmd');
       const headers = getHeaders();

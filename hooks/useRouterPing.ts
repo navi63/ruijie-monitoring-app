@@ -1,6 +1,7 @@
 import { useRouterApi } from '@/hooks/useRouterApi';
 import { RouterPingMetrics } from '@/types';
 import { useCallback, useEffect, useState } from 'react';
+import { useIsFocused } from '@react-navigation/native';
 
 export function useRouterPing(pollInterval = 5000) {
   const { pingRouter } = useRouterApi();
@@ -14,11 +15,16 @@ export function useRouterPing(pollInterval = 5000) {
     setIsLoading(false);
   }, [pingRouter]);
 
+  const isFocused = useIsFocused();
+
   useEffect(() => {
-    fetchPing();
-    const interval = setInterval(fetchPing, pollInterval);
+    let interval: ReturnType<typeof setInterval>;
+    if (isFocused) {
+      fetchPing();
+      interval = setInterval(fetchPing, pollInterval);
+    }
     return () => clearInterval(interval);
-  }, [fetchPing, pollInterval]);
+  }, [fetchPing, pollInterval, isFocused]);
 
   return {
     pingData,

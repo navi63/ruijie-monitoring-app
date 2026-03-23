@@ -1,6 +1,7 @@
 import { useRouterApi } from '@/hooks/useRouterApi';
 import { RouterOverviewStats } from '@/types';
 import { useCallback, useEffect, useState } from 'react';
+import { useIsFocused } from '@react-navigation/native';
 
 export function useRouterOverview(pollInterval = 2000) {
   const { getOverview } = useRouterApi();
@@ -25,11 +26,16 @@ export function useRouterOverview(pollInterval = 2000) {
     setIsLoading(false);
   }, [getOverview]);
 
+  const isFocused = useIsFocused();
+
   useEffect(() => {
-    fetchOverview();
-    const interval = setInterval(fetchOverview, pollInterval);
+    let interval: ReturnType<typeof setInterval>;
+    if (isFocused) {
+      fetchOverview();
+      interval = setInterval(fetchOverview, pollInterval);
+    }
     return () => clearInterval(interval);
-  }, [fetchOverview, pollInterval]);
+  }, [fetchOverview, pollInterval, isFocused]);
 
   // Format bytes/sec rate to human-readable
   const formatRate = (bytesPerSec: number) => {

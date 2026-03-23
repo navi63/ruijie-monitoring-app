@@ -1,6 +1,7 @@
 import { useRouterApi } from '@/hooks/useRouterApi';
 import { Device } from '@/types';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useIsFocused } from '@react-navigation/native';
 
 export const useDevices = () => {
   const [devices, setDevices] = useState<Device[]>([]);
@@ -103,11 +104,21 @@ export const useDevices = () => {
   }, [getClientsAndMacFilters]);
 
   // Initial load & Polling for live bandwidth speeds every 5s
+  const isFocused = useIsFocused();
+  const pollInterval = 5000; // 5 seconds
+
   useEffect(() => {
-    fetchDevices();
-    const interval = setInterval(fetchDevices, 5000);
-    return () => clearInterval(interval);
-  }, [fetchDevices]);
+    let interval: ReturnType<typeof setInterval> | undefined;
+    if (isFocused) {
+      fetchDevices();
+      interval = setInterval(fetchDevices, pollInterval);
+    }
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
+  }, [fetchDevices, pollInterval, isFocused]);
 
   const toggleDeviceExpanded = useCallback((id: string) => {
     setDevices((prev) =>
