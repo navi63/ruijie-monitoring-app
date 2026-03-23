@@ -77,6 +77,8 @@ export interface ButtonProps {
   isLoading?: boolean;
   icon?: React.ReactNode;
   iconPosition?: 'left' | 'right';
+  style?: any;
+  textStyle?: any;
 }
 
 export interface ToggleProps {
@@ -120,9 +122,40 @@ export type TabParamList = {
   clients: undefined;
   settings: undefined;
   stats: undefined;
+  router: undefined;
 };
 
 export type RootStackParamList = {
   '(tabs)': TabParamList;
   modal: undefined;
 };
+
+// ==============================
+// Router Authentication Types
+// ==============================
+
+export interface RouterConfig {
+  ip: string;
+  loginUrl: string;
+  authApi: string;
+  cookieName: string;
+  password?: string;
+}
+
+export interface AuthState {
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  error: string | null;
+  cookie: string | null;
+  routerConnected: boolean;
+}
+
+export interface RouterAuthContextType {
+  authState: AuthState;
+  routerConfig: RouterConfig;
+  updateRouterConfig: (config: Partial<RouterConfig>) => Promise<void>;
+  login: (cookie: string) => Promise<void>;
+  logout: () => Promise<void>;
+  refreshAuth: () => Promise<void>;
+  testConnection: () => Promise<boolean>;
+}
