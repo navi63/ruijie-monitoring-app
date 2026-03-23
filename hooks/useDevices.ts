@@ -1,11 +1,111 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useRouterApi } from '@/hooks/useRouterApi';
 import { Device } from '@/types';
-import { MOCK_DEVICES } from '@/constants/data';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 export const useDevices = () => {
-  const [devices, setDevices] = useState<Device[]>(MOCK_DEVICES);
+  const [devices, setDevices] = useState<Device[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const { getClientsAndMacFilters } = useRouterApi();
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState<'all' | 'active' | 'blocked'>('all');
+
+  const fetchDevices = useCallback(async () => {
+    setIsLoading(true);
+    const result = await getClientsAndMacFilters();
+    if (result) {
+      const { clients, filter: macFilter } = result;
+      // Map live clients to the UI format
+      const mappedDevices: Device[] = clients.map((c) => {
+        const isBlocked = macFilter.macList?.some(m => m.mac.toLowerCase() === c.mac.toLowerCase()) || false;
+
+        // determine dynamic icon
+        let icon = 'smartphone';
+        const hostLower = (c.hostName || c.name || c.deviceAliasName || '').toLowerCase();
+        if (hostLower.includes('desktop') || hostLower.includes('pc') || hostLower.includes('laptop') || hostLower.includes('macbook')) icon = 'laptop-mac';
+        else if (hostLower.includes('tv') || hostLower.includes('smart')) icon = 'tv';
+        else if (c.connectType === 'wire') icon = 'router';
+
+        // speed approximation
+        const speedNumDown = parseInt(c.flowDown || '0');
+        const speedNumUp = parseInt(c.flowUp || '0');
+        const totalSpeedBps = speedNumDown + speedNumUp;
+        const speedKbps = totalSpeedBps / 1024;
+        const speedMbps = speedKbps / 1024;
+
+        let speedStr = '0 KB/s';
+        if (speedMbps >= 1) speedStr = `${speedMbps.toFixed(1)} MB/s`;
+        else if (speedKbps > 0) speedStr = `${speedKbps.toFixed(1)} KB/s`;
+
+        const rssi = parseInt(c.rssi || '-100');
+        let signal = 'Fair';
+        if (rssi > -60) signal = 'Excellent';
+        else if (rssi > -80) signal = 'Good';
+
+        if (c.connectType === 'wire') signal = 'Excellent'; // Wired is always excellent
+
+        return {
+          id: c.mac,
+          name: c.name || c.hostName || c.deviceAliasName || 'Unknown Device',
+          ip: c.userIp,
+          mac: c.mac,
+          active: parseInt(c.awake || '0') === 0,
+          blocked: macFilter.type === 'deny' ? isBlocked : false,
+          speed: speedStr,
+          icon: icon,
+          signal: signal,
+          band: c.connectType === 'wire' ? 'Wired' : (c.band || 'N/A'),
+          ssid: c.ssid || '',
+          expanded: false,
+          bandwidthLimit: 100,
+        };
+      });
+
+      // Blocked devices in macFilter.macList are NOT in the clients list —
+      // append them separately as blocked entries
+      const clientMacs = new Set(mappedDevices.map(d => d.mac.toLowerCase()));
+      const blockedDevices: Device[] = (macFilter.macList || [])
+        .filter(m => !clientMacs.has(m.mac.toLowerCase()))
+        .map(m => ({
+          id: m.mac,
+          name: m.name || 'Unknown Device',
+          ip: '-',
+          mac: m.mac,
+          active: false,
+          blocked: true,
+          speed: '0 KB/s',
+          icon: 'smartphone',
+          signal: '-' as const,
+          band: '-',
+          ssid: '',
+          expanded: false,
+          bandwidthLimit: 100,
+        }));
+
+      const allDevices = [...mappedDevices, ...blockedDevices];
+
+      setDevices((prevDevices) => {
+        return allDevices.map(newDevice => {
+          const existingDevice = prevDevices.find(d => d.id === newDevice.id);
+          if (existingDevice) {
+            return {
+              ...newDevice,
+              expanded: existingDevice.expanded,
+              bandwidthLimit: existingDevice.bandwidthLimit,
+            };
+          }
+          return newDevice;
+        });
+      });
+    }
+    setIsLoading(false);
+  }, [getClientsAndMacFilters]);
+
+  // Initial load & Polling for live bandwidth speeds every 5s
+  useEffect(() => {
+    fetchDevices();
+    const interval = setInterval(fetchDevices, 5000);
+    return () => clearInterval(interval);
+  }, [fetchDevices]);
 
   const toggleDeviceExpanded = useCallback((id: string) => {
     setDevices((prev) =>
@@ -63,6 +163,7 @@ export const useDevices = () => {
 
   return {
     devices,
+    isLoading,
     filteredDevices,
     searchQuery,
     setSearchQuery,
