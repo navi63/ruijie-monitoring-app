@@ -6,6 +6,7 @@ import {
   StyleSheet,
   Alert,
   Dimensions,
+  TouchableOpacity,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -30,24 +31,60 @@ export default function RouterScreen() {
 
   const [ipAddress, setIpAddress] = useState(routerConfig.ip);
   const [password, setPassword] = useState(routerConfig.password || '');
+  const [tunnelUrl, setTunnelUrl] = useState(routerConfig.tunnelUrl || '');
+  const [activeTab, setActiveTab] = useState<'local' | 'tunnel'>(routerConfig.useTunnel ? 'tunnel' : 'local');
+  const [webViewUrl, setWebViewUrl] = useState<string | undefined>(undefined);
 
   React.useEffect(() => {
     setIpAddress(routerConfig.ip);
     setPassword(routerConfig.password || '');
-  }, [routerConfig.ip, routerConfig.password]);
+    setTunnelUrl(routerConfig.tunnelUrl || '');
+    setActiveTab(routerConfig.useTunnel ? 'tunnel' : 'local');
+  }, [routerConfig.ip, routerConfig.password, routerConfig.tunnelUrl, routerConfig.useTunnel]);
 
   const handleSaveConfig = async () => {
-    await updateRouterConfig({ ip: ipAddress, password });
+    await updateRouterConfig({ 
+      ip: ipAddress, 
+      password, 
+      tunnelUrl: activeTab === 'tunnel' ? tunnelUrl : routerConfig.tunnelUrl,
+      useTunnel: activeTab === 'tunnel'
+    });
     Alert.alert('Configuration Saved', 'Router connection details securely saved.');
   };
 
   const handleInitializeConnection = async () => {
-    await updateRouterConfig({ ip: ipAddress, password });
+    let finalTunnelUrl = tunnelUrl;
+    let extractedBaseUrl = '';
+
+    if (activeTab === 'tunnel') {
+      try {
+        const urlObj = new URL(tunnelUrl);
+        extractedBaseUrl = `${urlObj.protocol}//${urlObj.host}`;
+      } catch (e) {
+        Alert.alert('Invalid URL', 'Please enter a valid tunnel URL.');
+        return;
+      }
+    }
+
+    await updateRouterConfig({ 
+      ip: ipAddress, 
+      password, 
+      tunnelUrl: extractedBaseUrl || routerConfig.tunnelUrl,
+      useTunnel: activeTab === 'tunnel'
+    });
+
+    if (activeTab === 'tunnel') {
+      setWebViewUrl(tunnelUrl);
+    } else {
+      setWebViewUrl(undefined);
+    }
+    
     setShowWebView(true);
   };
 
   const handleAuthSuccess = () => {
     setShowWebView(false);
+    setWebViewUrl(undefined);
     Alert.alert('Success', 'Successfully authenticated with router!');
   };
 
@@ -67,6 +104,7 @@ export default function RouterScreen() {
           onPress: async () => {
             await logout();
             setShowWebView(false);
+            setWebViewUrl(undefined);
           },
         },
       ]
@@ -90,7 +128,7 @@ export default function RouterScreen() {
   };
 
   if (showWebView) {
-    return <RouterWebView onAuthSuccess={handleAuthSuccess} onAuthFailure={handleAuthFailure} />;
+    return <RouterWebView onAuthSuccess={handleAuthSuccess} onAuthFailure={handleAuthFailure} initialUrl={webViewUrl} />;
   }
 
   return (
@@ -107,7 +145,7 @@ export default function RouterScreen() {
         <Animated.View entering={FadeInDown.delay(100).duration(500)} style={styles.header}>
           <Text style={[styles.title, { color: colors.text }]}>Router Console</Text>
           <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-            Ruijie Network • {routerConfig.ip}
+            Ruijie Network • {activeTab === 'tunnel' ? 'Cloud Tunnel' : routerConfig.ip}
           </Text>
         </Animated.View>
 
@@ -151,59 +189,109 @@ export default function RouterScreen() {
                 colors={[colors.primary + '10', 'transparent']}
                 style={StyleSheet.absoluteFillObject}
               />
+              
+              <View style={[styles.tabContainer, { backgroundColor: colors.borderLight }]}>
+                <TouchableOpacity 
+                  onPress={() => setActiveTab('local')}
+                  style={[styles.tab, activeTab === 'local' && { backgroundColor: colors.primary + '20', borderColor: colors.primary }]}
+                >
+                  <MaterialIcons name="router" size={20} color={activeTab === 'local' ? colors.primary : colors.textSecondary} />
+                  <Text style={[styles.tabText, { color: activeTab === 'local' ? colors.primary : colors.textSecondary }]}>Local IP</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  onPress={() => setActiveTab('tunnel')}
+                  style={[styles.tab, activeTab === 'tunnel' && { backgroundColor: colors.primary + '20', borderColor: colors.primary }]}
+                >
+                  <MaterialIcons name="cloud" size={20} color={activeTab === 'tunnel' ? colors.primary : colors.textSecondary} />
+                  <Text style={[styles.tabText, { color: activeTab === 'tunnel' ? colors.primary : colors.textSecondary }]}>Cloud Tunnel</Text>
+                </TouchableOpacity>
+              </View>
+
               <View style={[styles.glowIconContainer, { backgroundColor: colors.surface, borderColor: colors.borderLight }]}>
-                <MaterialIcons name="admin-panel-settings" size={42} color={colors.primary} />
+                <MaterialIcons name={activeTab === 'local' ? "admin-panel-settings" : "vpn-lock"} size={42} color={colors.primary} />
               </View>
               <Text style={[styles.authTitle, { color: colors.text }]}>
-                Secure Authentication
+                {activeTab === 'local' ? 'Secure Authentication' : 'Tunnel Connection'}
               </Text>
               <Text style={[styles.authDescription, { color: colors.textSecondary }]}>
-                Connect to your Ruijie router to manage network configurations, connected devices, and perform real-time diagnostics.
+                {activeTab === 'local' 
+                  ? 'Connect to your Ruijie router to manage network configurations and real-time diagnostics.'
+                  : 'Access your router remotely through the Ruijie Cloud tunnel URL.'}
               </Text>
               
               <View style={[styles.authInfoBox, { backgroundColor: colors.background, borderColor: colors.borderLight }]}>
                 <MaterialIcons name="info-outline" size={20} color={colors.info} />
                 <Text style={[styles.authInfoText, { color: colors.textSecondary }]}>
-                  Please confirm your router network target and admin password below.
+                  {activeTab === 'local' 
+                    ? 'Please confirm your router network target and admin password below.'
+                    : 'Paste the full tunnel URL from Ruijie Cloud to initialize connection.'}
                 </Text>
               </View>
 
               <View style={{ width: '100%', gap: 16, marginBottom: 28 }}>
-                <Input
-                  label="Router IP Address"
-                  value={ipAddress}
-                  onChangeText={setIpAddress}
-                  placeholder="e.g. 192.168.110.1"
-                  keyboardType="numeric"
-                  icon="router"
-                />
-                <Input
-                  label="Router Password"
-                  value={password}
-                  onChangeText={setPassword}
-                  placeholder="Enter admin password"
-                  secureTextEntry={true}
-                  icon="lock"
-                />
+                {activeTab === 'local' ? (
+                  <>
+                    <Input
+                      label="Router IP Address"
+                      value={ipAddress}
+                      onChangeText={setIpAddress}
+                      placeholder="e.g. 192.168.110.1"
+                      keyboardType="numeric"
+                      icon="router"
+                    />
+                    <Input
+                      label="Router Password"
+                      value={password}
+                      onChangeText={setPassword}
+                      placeholder="Enter admin password"
+                      secureTextEntry={true}
+                      icon="lock"
+                    />
+                  </>
+                ) : (
+                  <Input
+                    label="Tunnel URL"
+                    value={tunnelUrl}
+                    onChangeText={setTunnelUrl}
+                    placeholder="https://...ruijiecloud.net/..."
+                    icon="link"
+                    multiline
+                  />
+                )}
                 <Button 
                   title="Save Configuration" 
                   onPress={handleSaveConfig} 
                   variant="outline" 
                   size="medium"
+                  style={{ borderRadius: 14, borderColor: colors.primary + '40' }}
+                  textStyle={{ fontWeight: '700' }}
                   icon={<MaterialIcons name="save" size={18} color={colors.primary} />}
                 />
               </View>
 
               <Button
-                title="Initialize Connection"
+                title={activeTab === 'local' ? "Initialize Connection" : "Connect via Tunnel"}
                 onPress={handleInitializeConnection}
                 isLoading={authState.isLoading}
-                size="large"
-                style={styles.connectButton}
-                icon={<MaterialIcons name="vpn-key" size={20} color="#ffffff" />}
+                size="medium"
+                style={[
+                  styles.connectButton, 
+                  { 
+                    backgroundColor: colors.primary,
+                    shadowColor: colors.primary,
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: 0.2,
+                    shadowRadius: 4,
+                    elevation: 3,
+                  }
+                ]}
+                textStyle={{ fontWeight: '700' }}
+                icon={<MaterialIcons name={activeTab === 'local' ? "vpn-key" : "login"} size={20} color="#ffffff" />}
               />
               <Text style={[styles.hintText, { color: colors.textSecondary }]}>
-                Ensure your device is connected to the router's local network target.
+                {activeTab === 'local' 
+                  ? "Ensure your device is connected to the router's local network target."
+                  : "The app will extract the base URL and attempt to capture the session cookie."}
               </Text>
             </Card>
           </Animated.View>
@@ -236,7 +324,18 @@ export default function RouterScreen() {
                   isLoading={testingConnection}
                   size="medium"
                   icon={<MaterialIcons name="network-ping" size={18} color="#ffffff" />}
-                  style={styles.actionButton}
+                  style={[
+                    styles.actionButton,
+                    {
+                      backgroundColor: colors.primary,
+                      shadowColor: colors.primary,
+                      shadowOffset: { width: 0, height: 2 },
+                      shadowOpacity: 0.2,
+                      shadowRadius: 4,
+                      elevation: 3,
+                    }
+                  ]}
+                  textStyle={{ fontWeight: '700' }}
                 />
                 <Button
                   title="Renew Auth"
@@ -244,7 +343,8 @@ export default function RouterScreen() {
                   size="medium"
                   variant="outline"
                   icon={<MaterialIcons name="autorenew" size={18} color={colors.primary} />}
-                  style={styles.actionButton}
+                  style={[styles.actionButton, { borderRadius: 14, borderColor: colors.primary + '40' }]}
+                  textStyle={{ fontWeight: '700' }}
                 />
               </View>
             </Card>
@@ -389,7 +489,6 @@ const styles = StyleSheet.create({
   connectButton: {
     width: '100%',
     borderRadius: 16,
-    height: 56,
   },
   hintText: {
     fontSize: 12,
@@ -446,7 +545,6 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     flex: 1,
-    height: 52,
     borderRadius: 14,
   },
   logoutButton: {
@@ -454,5 +552,28 @@ const styles = StyleSheet.create({
     height: 56,
     borderRadius: 16,
     borderWidth: 1,
+  },
+  tabContainer: {
+    flexDirection: 'row',
+    borderRadius: 16,
+    padding: 6,
+    marginBottom: 24,
+    width: '100%',
+    gap: 8,
+  },
+  tab: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'transparent',
+    gap: 8,
+  },
+  tabText: {
+    fontSize: 14,
+    fontWeight: '600',
   },
 });

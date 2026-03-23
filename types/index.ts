@@ -141,6 +141,8 @@ export interface RouterConfig {
   authApi: string;
   cookieName: string;
   password?: string;
+  tunnelUrl?: string;
+  useTunnel?: boolean;
 }
 
 export interface RouterOverviewStats {

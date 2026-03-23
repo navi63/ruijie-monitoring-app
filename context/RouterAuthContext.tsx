@@ -53,10 +53,14 @@ export function RouterAuthProvider({
   const updateRouterConfig = useCallback(async (updates: Partial<RouterConfig>) => {
     setRouterConfig((prev) => {
       const newConfig = { ...prev, ...updates };
-      if (updates.ip) {
-        newConfig.loginUrl = `http://${updates.ip}/cgi-bin/luci/`;
-        newConfig.authApi = `http://${updates.ip}/cgi-bin/luci/api/auth`;
-      }
+      
+      const baseUrl = newConfig.useTunnel && newConfig.tunnelUrl 
+        ? newConfig.tunnelUrl 
+        : `http://${newConfig.ip}`;
+
+      newConfig.loginUrl = `${baseUrl}/cgi-bin/luci/`;
+      newConfig.authApi = `${baseUrl}/cgi-bin/luci/api/auth`;
+      
       SecureStore.setItemAsync(CONFIG_STORAGE_KEY, JSON.stringify(newConfig));
       return newConfig;
     });

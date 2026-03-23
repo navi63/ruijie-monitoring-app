@@ -25,11 +25,13 @@ import { useColorScheme } from "@/hooks/use-color-scheme";
 interface RouterWebViewProps {
   onAuthSuccess?: () => void;
   onAuthFailure?: (error: string) => void;
+  initialUrl?: string;
 }
 
 export function RouterWebView({
   onAuthSuccess,
   onAuthFailure,
+  initialUrl,
 }: RouterWebViewProps) {
   const webViewRef = useRef<WebView>(null);
   const colorScheme = useColorScheme();
@@ -383,7 +385,7 @@ export function RouterWebView({
       {!useManualAuth && (
         <WebView
           ref={webViewRef}
-          source={{ uri: !!currentUrl ? currentUrl : routerConfig.loginUrl }}
+          source={{ uri: !!currentUrl ? currentUrl : (initialUrl || routerConfig.loginUrl) }}
           style={styles.webView}
           injectedJavaScript={injectedJavaScript}
           onMessage={handleMessage}

@@ -13,6 +13,8 @@ export const Button: React.FC<ButtonProps> = ({
   isLoading = false,
   icon,
   iconPosition = 'left',
+  style,
+  textStyle,
 }) => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'dark'];
@@ -40,7 +42,7 @@ export const Button: React.FC<ButtonProps> = ({
     switch (variant) {
       case 'outline':
       case 'ghost':
-        return colors.textPrimary;
+        return colors.primary; // Fixed to primary for better visibility on outline
       default:
         return '#fff';
     }
@@ -49,13 +51,13 @@ export const Button: React.FC<ButtonProps> = ({
   const getBorderColor = () => {
     switch (variant) {
       case 'outline':
-        return colors.border;
+        return colors.primary; // Use primary for outline border
       default:
         return 'transparent';
     }
   };
 
-  const getSizeStyles = () => {
+  const getContainerPadding = () => {
     switch (size) {
       case 'small':
         return { paddingVertical: 8, paddingHorizontal: 16 };
@@ -63,6 +65,17 @@ export const Button: React.FC<ButtonProps> = ({
         return { paddingVertical: 16, paddingHorizontal: 32 };
       default:
         return { paddingVertical: 12, paddingHorizontal: 24 };
+    }
+  };
+
+  const getFontSize = () => {
+    switch (size) {
+      case 'small':
+        return 13;
+      case 'large':
+        return 18;
+      default:
+        return 15;
     }
   };
 
@@ -76,8 +89,8 @@ export const Button: React.FC<ButtonProps> = ({
           <Text
             style={[
               styles.text,
-              { color: getTextColor() },
-              getSizeStyles(),
+              { color: getTextColor(), fontSize: getFontSize() },
+              textStyle,
             ]}
           >
             {title}
@@ -91,16 +104,18 @@ export const Button: React.FC<ButtonProps> = ({
     <TouchableOpacity
       style={[
         styles.button,
+        getContainerPadding(),
         {
           backgroundColor: getBackgroundColor(),
           borderColor: getBorderColor(),
-          borderWidth: variant === 'outline' ? 1 : 0,
-          opacity: disabled ? 0.5 : 1,
+          borderWidth: variant === 'outline' ? 1.5 : 0,
         },
+        style,
+        disabled && { opacity: 0.5 },
       ]}
-      onPress={disabled ? undefined : onPress}
+      onPress={isDisabled ? undefined : onPress}
       activeOpacity={0.7}
-      disabled={disabled}
+      disabled={isDisabled}
     >
       {getContent()}
     </TouchableOpacity>
