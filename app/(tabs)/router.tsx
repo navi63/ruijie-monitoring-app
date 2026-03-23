@@ -41,6 +41,11 @@ export default function RouterScreen() {
     Alert.alert('Configuration Saved', 'Router connection details securely saved.');
   };
 
+  const handleInitializeConnection = async () => {
+    await updateRouterConfig({ ip: ipAddress, password });
+    setShowWebView(true);
+  };
+
   const handleAuthSuccess = () => {
     setShowWebView(false);
     Alert.alert('Success', 'Successfully authenticated with router!');
@@ -191,7 +196,7 @@ export default function RouterScreen() {
 
               <Button
                 title="Initialize Connection"
-                onPress={() => setShowWebView(true)}
+                onPress={handleInitializeConnection}
                 isLoading={authState.isLoading}
                 size="large"
                 style={styles.connectButton}
