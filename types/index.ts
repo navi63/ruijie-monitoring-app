@@ -142,6 +142,83 @@ export interface RouterConfig {
   password?: string;
 }
 
+export interface RouterOverviewStats {
+  conntrack_max: number;
+  uptime: number;
+  showgame: string;
+  online_users: number;
+  mtkhnat: string;
+  conntrack_count: number;
+  study: string;
+  runtime: number;
+  game: string;
+  cpuutil: string;
+  flowctrl: string;
+  status: string;
+  up_rate: number;
+  rcgame_enabled: string;
+  down_rate: number;
+}
+
+export interface RouterPingMetrics {
+  min: number;
+  num: number;
+  avg: number;
+  loss: number;
+  max: number;
+  time: number;
+}
+
+export interface RouterClientNode {
+  mac: string;
+  userIp: string;
+  name: string;
+  connectType: string;
+  sn: string;
+  ssid: string;
+  band: string;
+  onlinetime: string;
+  hardwareType: string;
+  rssi: string;
+  rxrate: string;
+  channel: string;
+  deviceAliasName: string;
+  osType: string;
+  manufacture: string;
+  activeTime: string;
+  wifiUpDown: string;
+  hostName: string;
+  groupId: string;
+  groupName: string;
+  up: string;
+  down: string;
+  flowUp: string;
+  flowDown: string;
+  ifname: string;
+  psm: string;
+  mlo: string;
+  flow_cnt: string;
+  awake: string;
+}
+
+export interface RouterMacFilterRule {
+  mac: string;
+  name: string;
+}
+
+export interface RouterMacFilterConfig {
+  type: string;
+  networkId: string;
+  groupId: string;
+  subConfigId: string;
+  version: string;
+  configId: string;
+  configTime: string;
+  currentTime: string;
+  macList: RouterMacFilterRule[];
+  axMacList: RouterMacFilterRule[];
+}
+
 export interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
