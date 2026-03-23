@@ -1,17 +1,37 @@
-import React from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Svg, Defs, LinearGradient as SvgLinearGradient, Stop, Path, Line } from 'react-native-svg';
-import { MaterialIcons } from '@expo/vector-icons';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { Badge, Card, GaugeCard } from '@/components/ui';
+import { MOCK_SYSTEM_HEALTH, SIGNAL_STRENGTH_COLORS } from '@/constants/data';
 import { Colors } from '@/constants/theme';
-import { Card, GaugeCard, Badge } from '@/components/ui';
-import { MOCK_SYSTEM_HEALTH, MOCK_DEVICES, SIGNAL_STRENGTH_COLORS } from '@/constants/data';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useRouterOverview } from '@/hooks/useRouterOverview';
+import { useRouterPing } from '@/hooks/useRouterPing';
+import { MaterialIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import React from 'react';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Defs, Path, Stop, Svg, LinearGradient as SvgLinearGradient } from 'react-native-svg';
 
 export default function DashboardScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'dark'];
+
+  const { downRate, upRate, history } = useRouterOverview();
+  const { avgPing, packetLoss } = useRouterPing();
+
+  // Create an SVG path from the bandwidth history array
+  // We'll map the history to a 500x128 viewBox coordinate system
+  const maxScale = Math.max(...history, 100); // At least 100 Mbps top scale
+  const smoothedPoints = history.map((val, i) => {
+    const x = (i / (Math.max(history.length - 1, 1))) * 500;
+    // Base is 120 so it doesn't touch the very bottom edge of viewBox. Minimum height is 20.
+    const y = 120 - (val / maxScale) * 100;
+    return { x, y };
+  });
+
+  // Calculate generic straight-line path
+  const linePathObj = smoothedPoints.map((p, i) => i === 0 ? `M${p.x},${p.y}` : `L${p.x},${p.y}`).join(' ');
+  // Base polygon path for the gradient to dip to bottom left/bottom right
+  const areaPath = `${linePathObj} L500,128 L0,128 Z`;
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'left', 'right']}>
@@ -60,8 +80,8 @@ export default function DashboardScreen() {
             <View style={styles.cardContent}>
               <Text style={[styles.cardLabel, { color: colors.textSecondary }]}>Total Bandwidth</Text>
               <View style={styles.bandwidthRow}>
-                <Text style={[styles.bandwidthValue, { color: colors.textPrimary }]}>850</Text>
-                <Text style={[styles.bandwidthUnit, { color: colors.primary }]}>Mbps</Text>
+                <Text style={[styles.bandwidthValue, { color: colors.textPrimary }]}>{Math.max(Number(downRate.value), Number(upRate.value))}</Text>
+                <Text style={[styles.bandwidthUnit, { color: colors.primary }]}>{downRate.unit}</Text>
               </View>
               <View style={styles.trendRow}>
                 <Badge text="+12%" variant="success" size="small" />
@@ -78,7 +98,7 @@ export default function DashboardScreen() {
                 <View style={[styles.gridLine, { borderBottomColor: `${colors.textSecondary}20` }]} />
               </View>
 
-              <Svg style={styles.chart} height={128} width="100%">
+              <Svg style={styles.chart} viewBox="0 0 500 128" width="100%" height={128} preserveAspectRatio="none">
                 <Defs>
                   <SvgLinearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
                     <Stop offset="0%" stopColor="#3b82f6" stopOpacity="0.4" />
@@ -86,18 +106,15 @@ export default function DashboardScreen() {
                   </SvgLinearGradient>
                 </Defs>
                 <Path
-                  d="M0,128 L0,80 C50,80 75,50 125,65 C175,80 200,30 250,45 C300,60 325,15 375,25 C425,35 450,65 500,50 L500,128 Z"
+                  d={areaPath}
                   fill="url(#chartGradient)"
                 />
                 <Path
-                  d="M0,80 C50,80 75,50 125,65 C175,80 200,30 250,45 C300,60 325,15 375,25 C425,35 450,65 500,50"
+                  d={linePathObj}
                   fill="none"
                   stroke="#3b82f6"
                   strokeWidth="2"
                   strokeLinecap="round"
-                  shadowColor="#3b82f6"
-                  shadowBlur={10}
-                  shadowOffset={{ width: 0, height: 0 }}
                 />
               </Svg>
             </View>
@@ -109,7 +126,7 @@ export default function DashboardScreen() {
                   <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Download</Text>
                 </View>
                 <Text style={[styles.statValue, { color: colors.textPrimary }]}>
-                  724 <Text style={[styles.statUnit, { color: colors.textSecondary }]}>Mbps</Text>
+                  {downRate.value} <Text style={[styles.statUnit, { color: colors.textSecondary }]}>{downRate.unit}</Text>
                 </Text>
               </View>
               <View style={styles.statItem}>
@@ -118,7 +135,37 @@ export default function DashboardScreen() {
                   <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Upload</Text>
                 </View>
                 <Text style={[styles.statValue, { color: colors.textPrimary }]}>
-                  126 <Text style={[styles.statUnit, { color: colors.textSecondary }]}>Mbps</Text>
+                  {upRate.value} <Text style={[styles.statUnit, { color: colors.textSecondary }]}>{upRate.unit}</Text>
+                </Text>
+              </View>
+            </View>
+          </Card>
+        </View>
+
+        {/* Ping and Packet Loss Card */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: colors.textSecondary, marginBottom: 12, paddingHorizontal: 4 }]}>Connection Stability</Text>
+          <Card style={[styles.pingCard, { backgroundColor: `${colors.surface}cc`, borderColor: `${colors.border}30` }]}>
+            <View style={styles.pingItem}>
+              <View style={[styles.pingIcon, { backgroundColor: `${colors.success}20` }]}>
+                <MaterialIcons name="swap-vert" size={24} color={colors.success} />
+              </View>
+              <View>
+                <Text style={[styles.pingLabel, { color: colors.textSecondary }]}>Average Ping</Text>
+                <Text style={[styles.pingValue, { color: colors.textPrimary }]}>
+                  {avgPing} <Text style={[styles.pingUnit, { color: colors.textSecondary }]}>ms</Text>
+                </Text>
+              </View>
+            </View>
+            <View style={[styles.pingDivider, { backgroundColor: `${colors.border}50` }]} />
+            <View style={styles.pingItem}>
+              <View style={[styles.pingIcon, { backgroundColor: `${colors.warning}20` }]}>
+                <MaterialIcons name="warning-amber" size={24} color={colors.warning} />
+              </View>
+              <View>
+                <Text style={[styles.pingLabel, { color: colors.textSecondary }]}>Packet Loss</Text>
+                <Text style={[styles.pingValue, { color: colors.textPrimary }]}>
+                  {packetLoss}
                 </Text>
               </View>
             </View>
@@ -227,22 +274,6 @@ export default function DashboardScreen() {
             </Card>
           </ScrollView>
         </View>
-
-        {/* Speed Test Banner */}
-        <Card style={[styles.banner, { backgroundColor: `${colors.surface}cc`, borderColor: `${colors.border}30` }]}>
-          <View style={styles.bannerContent}>
-            <View style={[styles.bannerIcon, { backgroundColor: colors.primary }]}>
-              <MaterialIcons name="speed" size={20} color="#fff" />
-            </View>
-            <View>
-              <Text style={[styles.bannerTitle, { color: colors.textPrimary }]}>Speed Test</Text>
-              <Text style={[styles.bannerSubtitle, { color: colors.textSecondary }]}>Check your ISP speed</Text>
-            </View>
-          </View>
-          <TouchableOpacity style={styles.bannerArrow}>
-            <MaterialIcons name="arrow-forward-ios" size={18} color={colors.textSecondary} />
-          </TouchableOpacity>
-        </Card>
 
         <View style={{ height: 100 }} />
       </ScrollView>
@@ -383,7 +414,7 @@ const styles = StyleSheet.create({
   gridLine: {
     flex: 1,
     borderBottomWidth: 1,
-    borderBottomStyle: 'dashed',
+    borderStyle: 'dashed',
   },
   statsRow: {
     flexDirection: 'row',
@@ -408,37 +439,33 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 12,
   },
-  banner: {
+  pingCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    borderRadius: 16,
-    padding: 16,
-    marginHorizontal: 20,
-    marginTop: 24,
+    padding: 20,
+    borderRadius: 20,
     borderWidth: 1,
   },
-  bannerContent: {
+  pingItem: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
   },
-  bannerIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+  pingIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  bannerTitle: { fontSize: 14, fontWeight: '700' },
-  bannerSubtitle: { fontSize: 12 },
-  bannerArrow: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.05)',
+  pingLabel: { fontSize: 13, fontWeight: '500', marginBottom: 2 },
+  pingValue: { fontSize: 20, fontWeight: '700' },
+  pingUnit: { fontSize: 14, fontWeight: '500' },
+  pingDivider: {
+    width: 1,
+    height: 40,
+    marginHorizontal: 16,
   },
   deviceList: {
     marginHorizontal: -20,

@@ -6,11 +6,22 @@ export function useRouterOverview(pollInterval = 2000) {
   const { getOverview } = useRouterApi();
   const [overview, setOverview] = useState<RouterOverviewStats | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [history, setHistory] = useState<number[]>(Array(20).fill(0));
 
   const fetchOverview = useCallback(async () => {
     setIsLoading(true);
     const data = await getOverview();
-    if (data) setOverview(data);
+    if (data) {
+      setOverview(data);
+      // Calculate total Mbps
+      const totalBps = (data.down_rate || 0) + (data.up_rate || 0);
+      const totalMbps = totalBps / 1024 / 1024;
+      setHistory((prev) => {
+        const next = [...prev, totalMbps];
+        if (next.length > 20) next.shift(); // Keep last 20
+        return next;
+      });
+    }
     setIsLoading(false);
   }, [getOverview]);
 
@@ -38,5 +49,6 @@ export function useRouterOverview(pollInterval = 2000) {
     onlineUsers: overview?.online_users ?? 0,
     cpuUtil: overview?.cpuutil ?? '0%',
     status: overview?.status ?? 'disconnected',
+    history,
   };
 }
