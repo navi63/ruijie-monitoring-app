@@ -10,10 +10,10 @@ import React, {
 
 const DEFAULT_CONFIG: RouterConfig = {
   ip: "192.168.110.1",
-  loginUrl: "http://192.168.110.1/cgi-bin/luci/",
-  authApi: "http://192.168.110.1/cgi-bin/luci/api/auth",
+  loginUrl: "https://192.168.110.1/cgi-bin/luci/",
+  authApi: "https://192.168.110.1/cgi-bin/luci/api/auth",
   cookieName: "G1U061Y103788",
-  password: "", // User will input this
+  password: "@rootkey123", // User will input this
 };
 
 const CONFIG_STORAGE_KEY = "router_auth_config";
@@ -182,4 +182,5 @@ export function useRouterAuth(): RouterAuthContextType {
   return context;
 }
 
-export { COOKIE_STORAGE_KEY, CONFIG_STORAGE_KEY };
+export { CONFIG_STORAGE_KEY, COOKIE_STORAGE_KEY };
+
