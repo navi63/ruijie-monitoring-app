@@ -14,6 +14,7 @@ import {
   WebViewMessageEvent,
   WebViewNavigation,
 } from "react-native-webview";
+import CookieManager from "@react-native-cookies/cookies";
 import {
   COOKIE_STORAGE_KEY,
   useRouterAuth,
@@ -42,7 +43,7 @@ export function RouterWebView({
   const [password, setPassword] = useState("");
   const [isAuthenticating, setIsAuthenticating] = useState(false);
 
-  const checkForLogin = useCallback((url: string) => {
+  const checkForLogin = useCallback(async (url: string) => {
     const hasStok = url.includes("stok=");
     const isHomeOverview = url.includes("/ehr/home_overview");
 
@@ -56,32 +57,48 @@ export function RouterWebView({
     );
 
     if (hasStok || isHomeOverview) {
-      const injectedScript = `
-        (function() {
-          const cookies = document.cookie;
-          console.log('Cookie found:', cookies);
-          if (cookies) {
-            window.ReactNativeWebView.postMessage(JSON.stringify({
-              type: 'LOGIN_SUCCESS',
-              cookie: cookies
-            }));
-          }
-        })();
-        true;
-      `;
-
-      if (webViewRef.current) {
-        webViewRef.current.injectJavaScript(injectedScript);
+      // Use native CookieManager to read HttpOnly cookies
+      try {
+        const routerUrl = routerConfig.loginUrl;
+        const cookies = await CookieManager.get(routerUrl);
+        console.log('Native cookies from CookieManager:', JSON.stringify(cookies));
+        
+        const cookieName = routerConfig.cookieName;
+        if (cookies[cookieName]) {
+          const authToken = cookies[cookieName].value;
+          console.log(`Auth cookie ${cookieName}:`, authToken);
+          await login(authToken);
+          onAuthSuccess?.();
+        } else {
+          console.log(`Cookie ${cookieName} not found in native store. Available:`, Object.keys(cookies));
+        }
+      } catch (error) {
+        console.error('CookieManager error:', error);
       }
     }
-  }, []);
+  }, [routerConfig.cookieName, routerConfig.loginUrl, login, onAuthSuccess]);
 
   const handleMessage = useCallback(
-    (event: WebViewMessageEvent) => {
+    async (event: WebViewMessageEvent) => {
       try {
         const data = JSON.parse(event.nativeEvent.data);
 
-        if (data.type === "LOGIN_SUCCESS" && data.cookie) {
+        if (data.type === "CHECK_NATIVE_COOKIES") {
+          // pollAuth detected login, use CookieManager to read HttpOnly cookie
+          try {
+            const cookies = await CookieManager.get(routerConfig.loginUrl);
+            console.log('pollAuth native cookies:', JSON.stringify(cookies));
+            const cookieName = routerConfig.cookieName;
+            if (cookies[cookieName]) {
+              const authToken = cookies[cookieName].value;
+              console.log(`pollAuth Auth cookie ${cookieName}:`, authToken);
+              await login(authToken);
+              onAuthSuccess?.();
+            }
+          } catch (err) {
+            console.error('pollAuth CookieManager error:', err);
+          }
+        } else if (data.type === "LOGIN_SUCCESS" && data.cookie) {
           login(data.cookie)
             .then(() => {
               onAuthSuccess?.();
@@ -96,7 +113,7 @@ export function RouterWebView({
         console.error("Error handling WebView message:", error);
       }
     },
-    [login, onAuthSuccess, onAuthFailure],
+    [login, onAuthSuccess, onAuthFailure, routerConfig.loginUrl, routerConfig.cookieName],
   );
 
   const handleNavigationStateChange = useCallback(
@@ -193,14 +210,15 @@ export function RouterWebView({
       const autoPassword = '${routerConfig.password || ""}';
       
       const pollAuth = setInterval(() => {
-        const cookies = document.cookie;
-        const hasStok = window.location.href.includes('stok=');
-        const isHomeOverview = window.location.href.includes('/ehr/home_overview');
+        const currentHref = window.location.href;
+        const hasStok = currentHref.includes('stok=');
+        const isHomeOverview = currentHref.includes('/ehr/home_overview');
 
-        if (cookies && (hasStok || isHomeOverview)) {
+        if (hasStok || isHomeOverview) {
+          // Signal the native layer to read cookies via CookieManager
           window.ReactNativeWebView.postMessage(JSON.stringify({
-            type: 'LOGIN_SUCCESS',
-            cookie: cookies
+            type: 'CHECK_NATIVE_COOKIES',
+            url: currentHref
           }));
           clearInterval(pollAuth);
           return;
