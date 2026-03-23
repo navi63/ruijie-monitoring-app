@@ -45,3 +45,4 @@ app-example
 #model
 .qwen/
 .design/
+.feat/
