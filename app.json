@@ -53,6 +53,12 @@
         "projectId": "c4a46c81-04e2-484b-9fbc-9d5bbc6d8ca7"
       }
     },
-    "owner": "navi63"
+    "owner": "navi63",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/c4a46c81-04e2-484b-9fbc-9d5bbc6d8ca7"
+    }
   }
 }
